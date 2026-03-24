@@ -229,6 +229,17 @@ if ! mv "$NEW_DIR" "$CRS_DIR" 2>/dev/null; then
   fallback "Failed to activate new CRS; rolled back to bundled CRS."
 fi
 
+# Re-apply honeytrap CRS plugin files from image stash (tarball may not include them)
+STASH="/opt/honeytrap-crs-plugin"
+if [ -d "$STASH" ]; then
+  mkdir -p "${CRS_DIR}/plugins"
+  for f in honeytrap-plugin-config.conf honeytrap-plugin-before.conf honeytrap-plugin-after.conf honeytrap-plugin-generated-after.conf; do
+    if [ -f "${STASH}/${f}" ]; then
+      cp -f "${STASH}/${f}" "${CRS_DIR}/plugins/${f}"
+    fi
+  done
+fi
+
 log "CRS updated to $CRSVERSION at $CRS_DIR."
 write_status true "ok" "CRS updated successfully" "$CRS_DIR" || true
 exit 0
