@@ -30,6 +30,8 @@ jobs:
         run: |
           IMAGE=waf_modsec:ci bash tests/test_crs_bundled_path_exists.sh
           IMAGE=waf_modsec:ci bash tests/test_crs_update_disabled_skipped_status.sh
+          IMAGE=waf_modsec:ci bash tests/test_crs_honeytrap_plugin_and_configtest.sh
+          IMAGE=waf_modsec:ci bash tests/test_plugin_survives_crs_update.sh
           IMAGE=waf_modsec:ci bash tests/test_entrypoint_runs_updater_before_apache.sh
           IMAGE=waf_modsec:ci bash tests/test_shodan_watcher_disabled.sh
           echo "All tests passed"
