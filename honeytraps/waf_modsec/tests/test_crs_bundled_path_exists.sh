@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 
 set -euo pipefail
@@ -9,7 +8,20 @@ NAME="test-crs-bundled-$RANDOM$RANDOM"
 cleanup() { docker rm -f "$NAME" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 
-docker run -d --name "$NAME" -e CRSUPDATE=false "$IMAGE" >/dev/null
+docker run -d --name "$NAME" \
+  -e CRSUPDATE=false \
+  -e LOGSTASH_HOST=logstash:5044 \
+  "$IMAGE" >/dev/null
+
+# Wait for container initialization
+sleep 3
+
+# Verify container is still running
+if ! docker ps --filter "name=$NAME" --format "{{.Names}}" | grep -q "$NAME"; then
+  echo "FAIL: Container exited during startup"
+  docker logs "$NAME" 2>&1 | tail -20
+  exit 1
+fi
 
 docker exec "$NAME" sh -lc '
   set -eu
