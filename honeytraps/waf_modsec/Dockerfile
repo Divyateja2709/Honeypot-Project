@@ -1,5 +1,6 @@
 FROM owasp/modsecurity-crs:apache
 USER root
+# CRS 4.0+ required for plugins/ include chain in include.conf (pin CRSVERSION when using crs_update.sh)
 ENV CRSUPDATE=false \
     CRSVERSION=latest \
     PERSONA=generic \
@@ -28,16 +29,20 @@ RUN sed -i 's/\r//' /modsec_entry.sh
 COPY crs_update.sh /crs_update.sh
 COPY httpd.conf /usr/local/apache2/conf/httpd.conf
 COPY modsecurity-extension.conf /app/modsecurity-extension.conf
+COPY modsecurity-honeytrap-engine.conf /app/modsecurity-honeytrap-engine.conf
+COPY crs-plugins/*.conf /opt/honeytrap-crs-plugin/
 COPY preprocess-modsec-log.py /app/preprocess-modsec-log.py
 COPY personas/ /personas/
 COPY scripts/ /app/scripts/
-RUN sed -i 's/\r//' /app/scripts/swap_persona.sh
+RUN sed -i 's/\r//' /app/scripts/swap_persona.sh && sed -i 's/\r//' /app/scripts/apply_honeytrap_rules.sh
 COPY shodan_watcher.py /app/shodan_watcher.py
 RUN set -eu; \
     chmod go-w /etc/filebeat/filebeat.yml; \
-    chmod +x /modsec_entry.sh /crs_update.sh /app/scripts/swap_persona.sh; \
+    chmod +x /modsec_entry.sh /crs_update.sh /app/scripts/swap_persona.sh /app/scripts/apply_honeytrap_rules.sh; \
     touch /var/log/modsec_audit_processed.log; \
-    cat /app/modsecurity-extension.conf >> /etc/modsecurity.d/modsecurity.conf; \
+    mkdir -p /etc/modsecurity.d/owasp-crs/plugins; \
+    cp -f /opt/honeytrap-crs-plugin/*.conf /etc/modsecurity.d/owasp-crs/plugins/; \
+    cat /app/modsecurity-honeytrap-engine.conf >> /etc/modsecurity.d/modsecurity.conf; \
     ARCH="${TARGETARCH:-amd64}"; \
     case "$ARCH" in amd64|arm64) ;; *) echo "Unsupported arch: $ARCH" >&2; exit 1 ;; esac; \
     FILEBEAT_DEB="filebeat-${FILEBEAT_VERSION}-${ARCH}.deb"; \
