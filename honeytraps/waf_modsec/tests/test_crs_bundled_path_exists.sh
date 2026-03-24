@@ -18,11 +18,13 @@ docker exec "$NAME" sh -lc '
   test -f /etc/modsecurity.d/include.conf
   test -f /etc/modsecurity.d/modsecurity.conf
 
-  # include.conf expects these paths
+  # include.conf expects these paths (CRS 4.x plugin chain)
   test -d "$CRS_DIR"
   test -f "$CRS_DIR/crs-setup.conf"
   test -d "$CRS_DIR/rules"
   ls -1 "$CRS_DIR"/rules/*.conf >/dev/null
+  test -d "$CRS_DIR/plugins"
+  test -f "$CRS_DIR/plugins/honeytrap-plugin-after.conf"
 '
 
 echo "PASS: bundled CRS exists where include.conf expects"
